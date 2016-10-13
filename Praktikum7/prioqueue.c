@@ -72,10 +72,10 @@ void Add (Queue * Q, infotype X)
 
 	address i,j;
  	if (IsEmpty(*Q)){
-		Head(*Q)=Tail(*Q)=i=1;
+		Q->HEAD = Q->TAIL =i=1;
 	}else{
 		i = Tail(*Q);
-		Tail(*Q) = j = i % MaxEl(*Q) + 1;
+		Q->TAIL = j = i % MaxEl(*Q) + 1;
 		while( i != Head(*Q) && Prio(Elmt(*Q,i)) > Prio(X) ){
 			Elmt(*Q,j) = Elmt(*Q,i);
 			i = i-1 == 0 ? MaxEl(*Q) : i-1 ;
