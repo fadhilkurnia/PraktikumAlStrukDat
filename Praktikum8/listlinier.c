@@ -76,6 +76,45 @@ address Search (List L, infotype X)
 	return found? P : Nil;
 }
 
+boolean FSearch (List L, address P)
+/* Mencari apakah ada elemen list yang beralamat P */
+/* Mengirimkan true jika ada, false jika tidak ada */
+{
+	address Q = First(L);
+	boolean found = false;
+	while(Q!=Nil && !found){
+		if(Q==P)
+			found = true;
+		Q = Next(Q);
+	}
+	return found;
+}
+
+address SearchPrec (List L, infotype X)
+/* Mengirimkan address elemen sebelum elemen yang nilainya=X */
+/* Mencari apakah ada elemen list dengan Info(P)=X */
+/* Jika ada, mengirimkan address Prec, dengan Next(Prec)=P dan Info(P)=X. */
+/* Jika tidak ada, mengirimkan Nil */
+/* Jika P adalah elemen pertama, maka Prec=Nil */
+/* Search dengan spesifikasi seperti ini menghindari */
+/* traversal ulang jika setelah Search akan dilakukan operasi lain */
+{
+	address P = Search(L,X);
+	if(P!=Nil){
+		if(P == First(L))
+			return Nil;
+		else{
+			address Q = First(L);
+			while(Next(Q)!=P){
+				Q = Next(Q);
+			}
+			return Q;
+		}
+	}else{
+		return Nil;
+	}
+}
+
 /****************** PRIMITIF BERDASARKAN NILAI ******************/
 /*** PENAMBAHAN ELEMEN ***/
 void InsVFirst (List *L, infotype X)
@@ -308,7 +347,209 @@ infotype Max (List L)
 	return MAX;
 }
 
+address AdrMax (List L)
+/* Mengirimkan address P, dengan info(P) yang bernilai maksimum */
+{
+	return Search(L,Max(L));
+}
+
+infotype Min (List L)
+/* Mengirimkan nilai info(P) yang minimum */
+{
+	address P = First(L);
+	infotype MIN;
+	if(!IsEmpty(L)){
+		MIN = Info(First(L));
+		while(Next(P)!=Nil){
+			if(Info(P)<MIN)
+				MIN = Info(P);
+			P = Next(P);
+		}
+		if(Info(P)<MIN)
+			MIN = Info(P);
+	}
+	return MIN;
+}
+
+
+address AdrMin (List L)
+/* Mengirimkan address P, dengan info(P) yang bernilai minimum */
+{
+	return Search(L,Min(L));
+}
+
+float Average (List L)
+/* Mengirimkan nilai rata-rata info(P) : List tidak kosong*/
+{
+	infotype sum = 0;
+	address P = First(L);
+	while(P!=Nil){
+		sum += Info(P);
+		P = Next(P);
+	}
+	return (float) sum / (float) NbElmt(L);
+}
+
+
 /****************** PROSES TERHADAP LIST ******************/
+void DelAll (List *L)
+/* Delete semua elemen list dan alamat elemen di-dealokasi */
+{
+	infotype X;
+	while(NbElmt(*L)>0)
+		DelVLast(&(*L),&X);
+}
+
+void InversList (List *L)
+/* I.S. sembarang. */
+/* F.S. elemen list dibalik : */
+/* Elemen terakhir menjadi elemen pertama, dan seterusnya. */
+/* Membalik elemen list, tanpa melakukan alokasi/dealokasi. */
+{
+	if (!IsEmpty(*L) && NbElmt(*L)>1){
+		int count = NbElmt(*L);
+		address X;
+		address P = First(*L);
+		address pre = Nil;
+		while(count >0){
+			X = Next(P);
+			Next(P) = pre;
+			pre = P;
+			First(*L) = P;
+			P = X;			
+			count--;
+		}
+	}
+}
+
+List FInversList (List L)
+/* Mengirimkan list baru, hasil invers dari L */
+/* dengan menyalin semua elemn list. Alokasi mungkin gagal. */
+/* Jika alokasi gagal, hasilnya list kosong */
+/* dan semua elemen yang terlanjur di-alokasi, harus didealokasi */
+{
+	List K;
+	CreateEmpty(&K);
+	InversList(&L);
+	address P = First(L);
+	address Q;
+	boolean fail = false;
+	
+	while(P!=Nil && !fail){
+		Q = Alokasi(Info(P));
+		if(Q!=NULL)
+			InsertLast(&K,Q);
+		else
+			fail = true;
+		P = Next(P);
+	}
+	if (fail)
+		DelAll(&K);
+	InversList(&L);
+	return K;
+}
+
+void CopyList (List *L1, List *L2)
+/* I.S. L1 sembarang. F.S. L2=L1 */
+/* L1 dan L2 "menunjuk" kepada list yang sama.*/
+/* Tidak ada alokasi/dealokasi elemen */
+{
+	First(*L2) = First(*L1);
+}
+
+List FCopyList (List L)
+/* Mengirimkan list yang merupakan salinan L */
+/* dengan melakukan alokasi. */
+/* Jika ada alokasi gagal, hasilnya list kosong dan */
+/* semua elemen yang terlanjur di-alokasi, harus didealokasi */
+{
+	address P = First(L);
+	boolean fail = false;
+	address Q;
+	List K;
+	CreateEmpty(&K);
+	while(P!=Nil && !fail){
+		Q = Alokasi(Info(P));
+		if(Q!=NULL)
+			InsertLast(&K,Q);
+		else
+			fail = true;
+		P = Next(P);
+	}
+	
+	if (fail)
+		DelAll(&K);
+	
+	return K;
+}
+
+void CpAlokList (List Lin, List *Lout)
+/* I.S. Lin sembarang. */
+/* F.S. Jika semua alokasi berhasil,maka Lout berisi hasil copy Lin */
+/* Jika ada alokasi yang gagal, maka Lout=Nil dan semua elemen yang terlanjur dialokasi, didealokasi */
+/* dengan melakukan alokasi elemen. */
+/* Lout adalah list kosong jika ada alokasi elemen yang gagal */
+{
+	address P = First(Lin);
+	boolean fail = false;
+	address Q;
+	CreateEmpty(&(*Lout));
+	while(P!=Nil && !fail){
+		Q = Alokasi(Info(P));
+		if(Q!=NULL)
+			InsertLast(&(*Lout),Q);
+		else
+			fail = true;
+		P = Next(P);
+	}
+	
+	if (fail)
+		DelAll(&(*Lout));
+	
+}
+
+void Konkat (List L1, List L2, List * L3)
+/* I.S. L1 dan L2 sembarang */
+/* F.S. L1 dan L2 tetap, L3 adalah hasil konkatenasi L1 & L2 */
+/* Jika semua alokasi berhasil, maka L3 adalah hasil konkatenasi*/
+/* Jika ada alokasi yang gagal, semua elemen yang sudah dialokasi */
+/* harus di-dealokasi dan L3=Nil*/
+/* Konkatenasi dua buah list : L1 & L2 menghasilkan L3 yang "baru" */
+/* Elemen L3 adalah hasil alokasi elemen yang “baru”. */
+/* Jika ada alokasi yang gagal, maka L3 harus bernilai Nil*/
+/* dan semua elemen yang pernah dialokasi didealokasi */
+{
+	boolean fail = false;
+	address P = First(L1);
+	address Q;
+	CreateEmpty(&(*L3));
+	if(!IsEmpty(L1)){
+		while(P!=Nil && !fail){
+			Q = Alokasi(Info(P));
+			if(Q!=NULL)
+				InsertLast(&(*L3),Q);
+			else
+				fail = true;
+			P=Next(P);
+		}
+	}
+	if(!IsEmpty(L2) && !fail){
+		P = First(L2);
+		while(P!=Nil && !fail){
+			Q = Alokasi(Info(P));
+			if(Q!=NULL)
+				InsertLast(&(*L3),Q);
+			else
+				fail = true;
+			P=Next(P);
+		}
+	}
+	
+	if(fail)
+		DelAll(&(*L3));
+	
+}
+
 void Konkat1 (List *L1, List *L2, List *L3)
 /* I.S. L1 dan L2 sembarang */
 /* F.S. L1 dan L2 kosong, L3 adalah hasil konkatenasi L1 & L2 */
@@ -332,4 +573,29 @@ void Konkat1 (List *L1, List *L2, List *L3)
 		First(*L3) = First(*L2);
 	}
 	First(*L2) = Nil;
+}
+
+
+void PecahList (List *L1, List *L2, List L)
+/* I.S. L mungkin kosong */
+/* F.S. Berdasarkan L, dibentuk dua buah list L1 dan L2 */
+/* L tidak berubah: untuk membentuk L1 dan L2 harus alokasi */
+/* L1 berisi separuh elemen L dan L2 berisi sisa elemen L */
+/* Jika elemen L ganjil, maka separuh adalah NbElmt(L) div 2 */
+{
+	CreateEmpty(&(*L1));
+	CreateEmpty(&(*L2));
+	if(!IsEmpty(L)){
+		int i=1, mid = NbElmt(L) / 2;
+		address P = First(L);
+		address Q;
+		while(P!=Nil){
+			Q = Alokasi(Info(P));
+			if(i <= mid)
+				InsertLast(&(*L1),Q);
+			else
+				InsertLast(&(*L2),Q);
+			P = Next(P);i++;
+		}
+	}
 }
