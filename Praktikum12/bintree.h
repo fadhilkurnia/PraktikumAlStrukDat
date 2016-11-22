@@ -10,8 +10,7 @@
 #include "listrek.h"
 #include "boolean.h"
 
-//#define Nil 0 
-/* konstanta Nil sesuai pada modul listrek */
+/* #define Nil NULL */ /* konstanta Nil sesuai pada modul listrek */
 
 /* *** Definisi Type Pohon Biner *** */
 /* typedef int infotype; */ /* type infotype sesuai pada modul listrek */
